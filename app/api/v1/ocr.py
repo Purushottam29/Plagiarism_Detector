@@ -1,4 +1,3 @@
-print("Everything is fine here no problem in ocr.py")
 from fastapi import APIRouter, HTTPException
 from pathlib import Path
 from app.core.config import settings
