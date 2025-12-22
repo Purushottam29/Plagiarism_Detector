@@ -2,6 +2,8 @@ from fastapi import APIRouter, HTTPException
 from app.core.config import settings
 from app.services.nlp.nlp_pipeline import process_text
 from app.services.similarity.plagiarism_pipeline import run_plagiarism
+from app.services.report.highlighter import highlight_sentences
+from app.services.report.report_builder import build_report
 
 router = APIRouter(prefix="/plagiarism", tags=["Plagiarism"])
 
@@ -14,11 +16,10 @@ async def check_plagiarism(file_id: str):
         raise HTTPException(status_code=404, detail="Text not found")
 
     sentences = process_text(text_file)
-    score, matches = run_plagiarism(sentences)
+    plagiarism_pct, scores = run_plagiarism(sentences)
 
-    return {
-        "file_id": file_id,
-        "plagiarism_percentage": round(score, 2),
-        "sentence_matches": matches
-    }
+    highlighted = highlight_sentences(sentences, scores)
+    report = build_report(file_id, plagiarism_pct, highlighted)
+
+    return report
 
