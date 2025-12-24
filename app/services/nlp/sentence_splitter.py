@@ -1,8 +1,11 @@
-import spacy
+# app/services/nlp/sentence_splitter.py
 
-_nlp = spacy.load("en_core_web_sm")
+import re
 
 def split_into_sentences(text: str) -> list[str]:
-    doc = _nlp(text)
-    return [sent.text.strip() for sent in doc.sents if sent.text.strip()]
+    """
+    Splits text into sentences using simple regex.
+    """
+    sentences = re.split(r'(?<=[.!?])\s+', text)
+    return [s.strip() for s in sentences if s.strip()]
 

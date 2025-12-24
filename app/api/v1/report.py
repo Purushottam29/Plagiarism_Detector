@@ -1,25 +1,57 @@
+# app/api/v1/plagiarism.py
+
 from fastapi import APIRouter, HTTPException
+from pathlib import Path
+import json
+
 from app.core.config import settings
-from app.services.nlp.nlp_pipeline import process_text
-from app.services.similarity.plagiarism_pipeline import run_plagiarism
-from app.services.report.highlighter import highlight_sentences
-from app.services.report.report_builder import build_report
+from app.services.report.report_builder import run_plagiarism_check
 
 router = APIRouter(prefix="/plagiarism", tags=["Plagiarism"])
 
 
 @router.post("/{file_id}")
-async def check_plagiarism(file_id: str):
-    text_file = settings.EXTRACTED_TEXT_DIR / f"{file_id}.txt"
+async def run_plagiarism(file_id: str):
+    """
+    Plagiarism Detection Endpoint
 
-    if not text_file.exists():
-        raise HTTPException(status_code=404, detail="Text not found")
+    Expects:
+    - NLP pipeline already executed
+    - NLP output stored as JSON
 
-    sentences = process_text(text_file)
-    plagiarism_pct, scores = run_plagiarism(sentences)
+    Returns:
+    - Plagiarism percentage
+    - Sentence-level similarity scores
+    """
 
-    highlighted = highlight_sentences(sentences, scores)
-    report = build_report(file_id, plagiarism_pct, highlighted)
+    file_id = file_id.lower()
+    stem = Path(file_id).stem
 
-    return report
+    #  NLP output produced earlier
+    nlp_output_path = settings.NLP_OUTPUT_DIR / f"{stem}.json"
+
+    if not nlp_output_path.exists():
+        raise HTTPException(
+            status_code=404,
+            detail="NLP output not found. Run NLP before plagiarism."
+        )
+
+    try:
+        with open(nlp_output_path, "r", encoding="utf-8") as f:
+            nlp_data = json.load(f)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to load NLP output: {e}"
+        )
+
+    # Run plagiarism logic
+    report = run_plagiarism_check(nlp_data)
+
+    return {
+        "file_id": file_id,
+        "plagiarism_percentage": report["plagiarism_percentage"],
+        "sentence_matches": report["sentence_matches"],
+        "status": "plagiarism_completed"
+    }
 

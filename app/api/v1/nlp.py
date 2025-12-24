@@ -1,25 +1,36 @@
+# app/api/v1/nlp.py
+
 from fastapi import APIRouter, HTTPException
 from pathlib import Path
+
 from app.core.config import settings
-from app.services.nlp.nlp_pipeline import process_text
-from app.services.nlp.text_store import save_sentences
+from app.services.nlp.nlp_pipeline import run_nlp_pipeline
 
 router = APIRouter(prefix="/nlp", tags=["NLP"])
 
 
 @router.post("/{file_id}")
 async def run_nlp(file_id: str):
-    text_file = settings.EXTRACTED_TEXT_DIR / f"{file_id}.txt"
+    """
+    Runs NLP pipeline on extracted text and saves output JSON.
+    """
 
-    if not text_file.exists():
-        raise HTTPException(status_code=404, detail="OCR text not found")
+    # normalize
+    file_id = file_id.lower()
+    stem = Path(file_id).stem
 
-    sentences = process_text(text_file)
-    output_path = save_sentences(file_id, sentences)
+    extracted_text_path = settings.EXTRACTED_TEXT_DIR / f"{stem}.txt"
+    if not extracted_text_path.exists():
+        raise HTTPException(
+            status_code=404,
+            detail="Extracted text not found. Run OCR before NLP."
+        )
+
+    nlp_output = run_nlp_pipeline(stem)
 
     return {
         "file_id": file_id,
-        "sentences_count": len(sentences),
-        "output_file": output_path.name
+        "status": "nlp_completed",
+        "sentences": len(nlp_output.get("sentences", []))
     }
 

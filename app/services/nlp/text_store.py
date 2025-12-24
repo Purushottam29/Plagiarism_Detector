@@ -1,12 +1,22 @@
+# app/services/nlp/text_store.py
+
 from pathlib import Path
 from app.core.config import settings
 
-def save_sentences(file_id: str, sentences: list[str]) -> Path:
-    output_path = settings.EXTRACTED_TEXT_DIR / f"{file_id}.sentences.txt"
+def load_corpus_texts() -> list[str]:
+    """
+    Loads all corpus text files for plagiarism comparison.
+    """
+    corpus_texts = []
 
-    with output_path.open("w", encoding="utf-8") as f:
-        for s in sentences:
-            f.write(s + "\n")
+    if not settings.CORPUS_DIR.exists():
+        return corpus_texts
 
-    return output_path
+    for file in settings.CORPUS_DIR.glob("*.txt"):
+        try:
+            corpus_texts.append(file.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+
+    return corpus_texts
 

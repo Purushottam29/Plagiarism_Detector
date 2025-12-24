@@ -1,8 +1,18 @@
 from pathlib import Path
-from app.services.ingestion.ocr.ocr_service import run_ocr
-from app.services.ingestion.text_store import save_extracted_text
+import pytesseract
+from PIL import Image
 
-def process_image_for_ocr(image_path: Path, file_id: str):
-    extracted_text = run_ocr(image_path)
-    return save_extracted_text(file_id, extracted_text)
+
+def process_image_for_ocr(image_path: Path) -> str:
+    """
+    Pure OCR utility.
+    Takes an image path and returns extracted text.
+    NO saving, NO file_id, NO side effects.
+    """
+    try:
+        image = Image.open(image_path)
+        text = pytesseract.image_to_string(image)
+        return text.strip()
+    except Exception as e:
+        raise RuntimeError(f"OCR failed for {image_path.name}: {e}")
 
