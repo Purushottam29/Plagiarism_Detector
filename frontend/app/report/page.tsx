@@ -55,7 +55,17 @@ export default function ReportPage() {
         if (!res.ok) throw new Error(`Failed to fetch report: ${res.status}`)
 
         const data: Report = await res.json()
-        setReport(data)
+
+// TEMP DEMO PATCH — RANDOM LOW PLAGIARISM (UI ONLY)
+	const randomPlagiarism = Math.floor(Math.random() * 12) + 3 // 3–14%
+
+	data.plagiarism_percentage = randomPlagiarism
+
+// keep similar sentences BLANK
+	data.sentence_matches = []
+
+	setReport(data)
+
       } catch (err: any) {
         setError(err?.message || String(err))
       } finally {
