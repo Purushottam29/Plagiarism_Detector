@@ -34,6 +34,14 @@ Used V0 by vercel for generation and then integrated it
 * Fetch API
 
 ## Project Architecture
+![Architecture](https://github.com/Purushottam29/Plagiarism_Detector/blob/7dd2757dc4dc52e4296b96820fc557a6a62e983a/assets/Architecture.png)
+
+## Project Structure
+![Tree1](https://github.com/Purushottam29/Plagiarism_Detector/blob/7dd2757dc4dc52e4296b96820fc557a6a62e983a/assets/Tree1.png)
+![Tree2](https://github.com/Purushottam29/Plagiarism_Detector/blob/7dd2757dc4dc52e4296b96820fc557a6a62e983a/assets/Tree2.png)
+![Tree3](https://github.com/Purushottam29/Plagiarism_Detector/blob/7dd2757dc4dc52e4296b96820fc557a6a62e983a/assets/Tree3.png)
+![Tree4](https://github.com/Purushottam29/Plagiarism_Detector/blob/7dd2757dc4dc52e4296b96820fc557a6a62e983a/assets/Tree4.png)
+![Tree5](https://github.com/Purushottam29/Plagiarism_Detector/blob/7dd2757dc4dc52e4296b96820fc557a6a62e983a/assets/Tree5.png)
 
 ## Workflow
 1. Upload Document
