@@ -34,6 +34,7 @@ Used V0 by vercel for generation and then integrated it
 * Fetch API
 
 ## Project Architecture
+
 ## Workflow
 1. Upload Document
 2. Ingestion
