@@ -6,6 +6,8 @@ import json
 
 from app.core.config import settings
 from app.services.report.report_builder import run_plagiarism_check
+from app.services.report.highlighter import highlight_sentences
+from app.services.report.pdf_generator import generate_pdf
 
 router = APIRouter(prefix="/plagiarism", tags=["Plagiarism"])
 
@@ -48,10 +50,22 @@ async def run_plagiarism(file_id: str):
     # Run plagiarism logic
     report = run_plagiarism_check(nlp_data)
 
+    matches = report["matches"]
+
+    sentences = [m["sentence"] for m in matches]
+    scores = [m["similarity"] for m in matches]
+
+    highlighted_text = highlight_sentences(sentences, scores)
+
+    pdf_path = generate_pdf(
+        file_id,
+        report["plagiarism_percentage"],
+        highlighted_text
+    )
+
     return {
         "file_id": file_id,
         "plagiarism_percentage": report["plagiarism_percentage"],
-        "sentence_matches": report["sentence_matches"],
+        "download_report": pdf_path,
         "status": "plagiarism_completed"
     }
-

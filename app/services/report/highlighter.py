@@ -1,12 +1,12 @@
-def highlight_sentences(sentences: list[str], scores: list[float], threshold: float = 0.7):
-    results = []
+def highlight_sentences(sentences, scores, threshold=0.20):
+
+    highlighted_text = ""
 
     for sentence, score in zip(sentences, scores):
-        results.append({
-            "sentence": sentence,
-            "similarity_score": round(float(score), 3),
-            "is_plagiarized": score >= threshold
-        })
 
-    return results
+        if score >= threshold:
+            highlighted_text += f'<span class="plagiarized">{sentence}</span> '
+        else:
+            highlighted_text += sentence + " "
 
+    return highlighted_text
