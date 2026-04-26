@@ -29,8 +29,17 @@ def run_plagiarism_check(nlp_result: dict) -> dict:
         corpus_sentences
     )
 
+    # Ensure all returned values are JSON serializable (no numpy types)
+    cleaned_matches = []
+    for m in matches:
+        cleaned_matches.append({
+            "sentence": str(m.get("sentence", "")),
+            "similarity": float(m.get("similarity", 0.0)),
+            "plagiarized": bool(m.get("plagiarized", False)),
+        })
+
     return {
-        "plagiarism_percentage": plagiarism_percentage,
-        "matches": matches
+        "plagiarism_percentage": float(plagiarism_percentage),
+        "matches": cleaned_matches,
     }
 

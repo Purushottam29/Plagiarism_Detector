@@ -12,6 +12,7 @@ import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { FileText, CheckCircle2, Download, RotateCcw, ChevronDown, ChevronUp } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { getToken } from "@/lib/auth"
 
 type SentenceAnalysis = {
   sentence: string
@@ -20,6 +21,7 @@ type SentenceAnalysis = {
 }
 
 type Report = {
+  report_id?: number
   file_id: string
   plagiarism_percentage: number
   analysis: SentenceAnalysis[]
@@ -45,26 +47,25 @@ export default function ReportPage() {
       setLoading(true)
       setError(null)
       const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+      const token = getToken()
+      if (!token) {
+        router.push("/login")
+        return
+      }
 
       try {
         const res = await fetch(`${API_URL}/plagiarism/${encodeURIComponent(fileId)}`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
         })
 
         if (!res.ok) throw new Error(`Failed to fetch report: ${res.status}`)
 
         const data: Report = await res.json()
-
-// TEMP DEMO PATCH — RANDOM LOW PLAGIARISM (UI ONLY)
-	const randomPlagiarism = Math.floor(Math.random() * 12) + 3 // 3–14%
-
-	data.plagiarism_percentage = randomPlagiarism
-
-// keep similar sentences BLANK
-	data.sentence_matches = []
-
-	setReport(data)
+        setReport(data)
 
       } catch (err: any) {
         setError(err?.message || String(err))
@@ -74,7 +75,7 @@ export default function ReportPage() {
     }
 
     fetchReport()
-  }, [fileId])
+  }, [fileId, router])
 
   const sentencesWithThreshold = (report?.analysis || []).map((s, idx) => ({
     id: idx + 1,
@@ -90,6 +91,27 @@ export default function ReportPage() {
   const displayedSentences = showAllSentences ? filteredSentences : filteredSentences.slice(0, 3)
 
   const plagiarizedCount = sentencesWithThreshold.filter((s) => s.isPlagiarized).length
+  const downloadReport = async () => {
+    if (!report || !report.report_id) return
+    const token = getToken()
+    if (!token) {
+      router.push("/login")
+      return
+    }
+
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+    const res = await fetch(`${API_URL}/download/${report.report_id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    if (!res.ok) {
+      setError(`Download failed: ${res.status}`)
+      return
+    }
+    const blob = await res.blob()
+    const url = URL.createObjectURL(blob)
+    window.open(url, "_blank")
+    setTimeout(() => URL.revokeObjectURL(url), 15000)
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -106,7 +128,7 @@ export default function ReportPage() {
               <RotateCcw className="mr-2 h-4 w-4" />
               New Analysis
             </Button>
-            <Button>
+            <Button onClick={downloadReport} disabled={!report}>
               <Download className="mr-2 h-4 w-4" />
               Download Report
             </Button>

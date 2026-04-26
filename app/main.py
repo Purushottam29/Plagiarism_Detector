@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.database import Base, engine
 from app.core.config import settings
 from app.core.logging import setup_logging
 from app.api.v1.health import router as health_router
@@ -8,6 +9,8 @@ from app.api.v1.ingest import router as ingest_router
 from app.api.v1.ocr import router as ocr_router
 from app.api.v1.nlp import router as nlp_router
 from app.api.v1.report import router as plagiarism_router
+from app.routes.auth_routes import router as auth_router
+from app.routes.report_routes import router as report_routes
 
 setup_logging()
 
@@ -31,9 +34,12 @@ app.include_router(ingest_router)
 app.include_router(ocr_router)
 app.include_router(nlp_router)
 app.include_router(plagiarism_router)
+app.include_router(auth_router)
+app.include_router(report_routes)
 
 @app.on_event("startup")
 async def startup_event():
+    Base.metadata.create_all(bind=engine)
     settings.UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
     settings.EXTRACTED_TEXT_DIR.mkdir(parents=True, exist_ok=True)
     settings.NLP_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)

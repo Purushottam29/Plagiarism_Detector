@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { Navigation } from "@/components/navigation"
 import { UploadCard } from "@/components/upload-card"
 import { WorkflowStepper, type WorkflowStep } from "@/components/workflow-stepper"
+import { getToken } from "@/lib/auth"
 
 const initialSteps: WorkflowStep[] = [
   {
@@ -53,6 +54,12 @@ export default function UploadPage() {
   const handleAnalyze = async () => {
     if (!selectedFile) return
 
+    const token = getToken()
+    if (!token) {
+      router.push("/login")
+      return
+    }
+
     const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
 
     const formData = new FormData()
@@ -74,19 +81,31 @@ export default function UploadPage() {
       // After upload, run ingest -> ocr -> nlp -> plagiarism in sequence.
       // Each step must run or plagiarism will 404.
       console.log("About to ingest file_id:", fileId)
-      const ingestRes = await fetch(`${API_URL}/ingest/${fileId}`, { method: "POST" })
+      const ingestRes = await fetch(`${API_URL}/ingest/${fileId}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      })
       if (!ingestRes.ok) throw new Error(`Ingest failed: ${ingestRes.status}`)
 
       console.log("Calling OCR")
-      const ocrRes = await fetch(`${API_URL}/ocr/${fileId}`, { method: "POST" })
+      const ocrRes = await fetch(`${API_URL}/ocr/${fileId}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      })
       if (!ocrRes.ok) throw new Error(`OCR failed: ${ocrRes.status}`)
 
       console.log("Calling NLP")
-      const nlpRes = await fetch(`${API_URL}/nlp/${fileId}`, { method: "POST" })
+      const nlpRes = await fetch(`${API_URL}/nlp/${fileId}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      })
       if (!nlpRes.ok) throw new Error(`NLP failed: ${nlpRes.status}`)
 
       console.log("Calling plagiarism")
-      const reportRes = await fetch(`${API_URL}/plagiarism/${fileId}`, { method: "POST" })
+      const reportRes = await fetch(`${API_URL}/plagiarism/${fileId}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      })
       if (!reportRes.ok) throw new Error(`Plagiarism failed: ${reportRes.status}`)
       const report = await reportRes.json()
 

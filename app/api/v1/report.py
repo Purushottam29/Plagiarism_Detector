@@ -1,19 +1,21 @@
-# app/api/v1/plagiarism.py
-
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pathlib import Path
-import json
+from sqlalchemy.orm import Session
 
 from app.core.config import settings
-from app.services.report.report_builder import run_plagiarism_check
-from app.services.report.highlighter import highlight_sentences
-from app.services.report.pdf_generator import generate_pdf
+from app.db_models import Report, User
+from app.dependencies import get_current_user, get_db
+from app.services.plagiarism_service import run_plagiarism_for_file
 
 router = APIRouter(prefix="/plagiarism", tags=["Plagiarism"])
 
 
 @router.post("/{file_id}")
-async def run_plagiarism(file_id: str):
+async def run_plagiarism(
+    file_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
     """
     Plagiarism Detection Endpoint
 
@@ -39,33 +41,27 @@ async def run_plagiarism(file_id: str):
         )
 
     try:
-        with open(nlp_output_path, "r", encoding="utf-8") as f:
-            nlp_data = json.load(f)
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to load NLP output: {e}"
-        )
+        result = run_plagiarism_for_file(file_id)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Plagiarism processing failed: {exc}")
 
-    # Run plagiarism logic
-    report = run_plagiarism_check(nlp_data)
-
-    matches = report["matches"]
-
-    sentences = [m["sentence"] for m in matches]
-    scores = [m["similarity"] for m in matches]
-
-    highlighted_text = highlight_sentences(sentences, scores)
-
-    pdf_path = generate_pdf(
-        file_id,
-        report["plagiarism_percentage"],
-        highlighted_text
+    report_record = Report(
+        user_id=current_user.id,
+        file_name=stem,
+        plagiarism_percentage=result["plagiarism_percentage"],
+        pdf_path=result["pdf_path"],
     )
+    db.add(report_record)
+    db.commit()
+    db.refresh(report_record)
 
     return {
         "file_id": file_id,
-        "plagiarism_percentage": report["plagiarism_percentage"],
-        "download_report": pdf_path,
-        "status": "plagiarism_completed"
+        "report_id": report_record.id,
+        "plagiarism_percentage": result["plagiarism_percentage"],
+        "analysis": result["analysis"],
+        "total_sentences": result["total_sentences"],
+        "plagiarized": result["plagiarized"],
+        "download_report": result["pdf_path"],
+        "status": "plagiarism_completed",
     }

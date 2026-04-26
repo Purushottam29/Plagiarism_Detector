@@ -4,13 +4,17 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { FileText } from "lucide-react"
+import { clearToken, getToken } from "@/lib/auth"
+import { useMemo } from "react"
 
 export function Navigation() {
   const pathname = usePathname()
+  const hasToken = useMemo(() => (typeof window !== "undefined" ? Boolean(getToken()) : false), [pathname])
 
   const links = [
     { href: "/", label: "Upload" },
     { href: "/report", label: "Report" },
+    { href: "/history", label: "History" },
     { href: "/about", label: "About" },
   ]
 
@@ -28,7 +32,7 @@ export function Navigation() {
             </div>
           </div>
 
-          <div className="flex gap-1">
+          <div className="flex items-center gap-1">
             {links.map((link) => (
               <Link
                 key={link.href}
@@ -43,6 +47,26 @@ export function Navigation() {
                 {link.label}
               </Link>
             ))}
+            {hasToken ? (
+              <button
+                onClick={clearToken}
+                className="px-4 py-2 text-sm font-medium rounded-md transition-colors text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
+              >
+                Logout
+              </button>
+            ) : (
+              <Link
+                href="/login"
+                className={cn(
+                  "px-4 py-2 text-sm font-medium rounded-md transition-colors",
+                  pathname === "/login"
+                    ? "bg-secondary text-secondary-foreground"
+                    : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground",
+                )}
+              >
+                Login
+              </Link>
+            )}
           </div>
         </div>
       </div>
