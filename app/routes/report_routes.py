@@ -28,6 +28,7 @@ def list_reports(
 @router.get("/download/{report_id}")
 def download_report(
     report_id: int,
+    type: str = "normal",
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -39,7 +40,14 @@ def download_report(
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
 
-    pdf_path = Path(report.pdf_path)
+    if type not in {"normal", "ai"}:
+        raise HTTPException(status_code=400, detail="Invalid report type. Use normal or ai.")
+
+    selected_path = report.normal_pdf_path if type == "normal" else report.ai_pdf_path
+    if not selected_path and report.pdf_path:
+        selected_path = report.pdf_path
+
+    pdf_path = Path(selected_path)
     if not pdf_path.exists():
         raise HTTPException(status_code=404, detail="PDF file not found")
 

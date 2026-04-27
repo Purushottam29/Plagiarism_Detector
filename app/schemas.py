@@ -24,5 +24,8 @@ class ReportHistoryItem(BaseModel):
     id: int
     file_name: str
     plagiarism_percentage: float
-    pdf_path: str
+    ai_percentage: float
+    normal_pdf_path: str
+    ai_pdf_path: str
+    pdf_path: str | None = None
     created_at: datetime

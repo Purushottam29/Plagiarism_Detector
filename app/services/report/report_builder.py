@@ -1,4 +1,5 @@
 from app.services.similarity import compute_similarity
+from app.services.nlp.sentence_splitter import split_into_sentences
 
 
 def run_plagiarism_check(nlp_result: dict) -> dict:
@@ -13,15 +14,16 @@ def run_plagiarism_check(nlp_result: dict) -> dict:
     """
 
     sentences = nlp_result.get("sentences", [])
-    corpus_sentences = (
-        nlp_result.get("corpus_sentences")
-        or nlp_result.get("corpus_texts", [])
-    )
+    corpus_sentences = nlp_result.get("corpus_sentences") or []
+    if not corpus_sentences:
+        corpus_texts = nlp_result.get("corpus_texts", [])
+        for corpus_text in corpus_texts:
+            corpus_sentences.extend(split_into_sentences(corpus_text))
 
     if not sentences or not corpus_sentences:
         return {
-            "plagiarism_percentage": 0,
-            "sentence_matches": []
+            "plagiarism_percentage": 0.00,
+            "matches": []
         }
 
     plagiarism_percentage, matches = compute_similarity(
@@ -39,7 +41,7 @@ def run_plagiarism_check(nlp_result: dict) -> dict:
         })
 
     return {
-        "plagiarism_percentage": float(plagiarism_percentage),
+        "plagiarism_percentage": round(float(plagiarism_percentage), 2),
         "matches": cleaned_matches,
     }
 

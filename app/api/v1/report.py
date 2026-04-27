@@ -49,7 +49,10 @@ async def run_plagiarism(
         user_id=current_user.id,
         file_name=stem,
         plagiarism_percentage=result["plagiarism_percentage"],
-        pdf_path=result["pdf_path"],
+        ai_percentage=result["ai_percentage"],
+        normal_pdf_path=result["normal_pdf_path"],
+        ai_pdf_path=result["ai_pdf_path"],
+        pdf_path=result["normal_pdf_path"],
     )
     db.add(report_record)
     db.commit()
@@ -59,9 +62,12 @@ async def run_plagiarism(
         "file_id": file_id,
         "report_id": report_record.id,
         "plagiarism_percentage": result["plagiarism_percentage"],
+        "ai_percentage": result["ai_percentage"],
         "analysis": result["analysis"],
         "total_sentences": result["total_sentences"],
         "plagiarized": result["plagiarized"],
-        "download_report": result["pdf_path"],
+        "download_report": result["normal_pdf_path"],
+        "normal_pdf_path": result["normal_pdf_path"],
+        "ai_pdf_path": result["ai_pdf_path"],
         "status": "plagiarism_completed",
     }

@@ -3,7 +3,7 @@ import logging
 from app.core.config import settings
 from app.db.corpus_loader import load_corpus
 from app.services.similarity.hybrid import HybridSimilarityEngine
-from app.services.similarity.scorer import plagiarism_score
+from app.services.similarity.scorer import score_matches
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +17,6 @@ def run_plagiarism(sentences: list[str]):
     engine = HybridSimilarityEngine(alpha=0.6)
     similarity = engine.compute(sentences, corpus)
 
-    score, matches = plagiarism_score(similarity)
-    return score, matches.tolist()
+    score, matches = score_matches(similarity, sentences, corpus)
+    return score, matches
 

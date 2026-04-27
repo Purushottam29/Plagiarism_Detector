@@ -24,7 +24,10 @@ class Report(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     file_name = Column(String, nullable=False)
     plagiarism_percentage = Column(Float, nullable=False)
-    pdf_path = Column(String, nullable=False)
+    ai_percentage = Column(Float, nullable=False, default=0.0)
+    normal_pdf_path = Column(String, nullable=False, default="")
+    ai_pdf_path = Column(String, nullable=False, default="")
+    pdf_path = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     user = relationship("User", back_populates="reports")

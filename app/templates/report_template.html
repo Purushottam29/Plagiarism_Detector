@@ -14,6 +14,10 @@ h1 {
     background-color: #ffb3b3;
 }
 
+.ai-detected {
+    background-color: #b3d9ff;
+}
+
 .normal {
     background-color: transparent;
 }
@@ -27,10 +31,10 @@ p {
 
 <body>
 
-<h1>Plagiarism Report</h1>
+<h1>{{report_title}}</h1>
 
 <p><b>File:</b> {{file_id}}</p>
-<p><b>Plagiarism Percentage:</b> {{percentage}}%</p>
+<p><b>{{score_label}}:</b> {{percentage}}%</p>
 
 <hr>
 

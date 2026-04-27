@@ -6,7 +6,6 @@ import { useSearchParams } from "next/navigation"
 import { Navigation } from "@/components/navigation"
 import { SummaryCard } from "@/components/summary-card"
 import { PlagiarismScore } from "@/components/plagiarism-score"
-import { SentenceAnalysisControls } from "@/components/sentence-analysis-controls"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -18,20 +17,20 @@ type SentenceAnalysis = {
   sentence: string
   similarity_score: number
   is_plagiarized: boolean
+  ai_likelihood?: number
 }
 
 type Report = {
   report_id?: number
   file_id: string
   plagiarism_percentage: number
+  ai_percentage: number
   analysis: SentenceAnalysis[]
 }
 
 export default function ReportPage() {
   const router = useRouter()
   const [showAllSentences, setShowAllSentences] = useState(false)
-  const [filterPlagiarized, setFilterPlagiarized] = useState(false)
-  const [threshold, setThreshold] = useState(70)
   const searchParams = useSearchParams()
 
   const [report, setReport] = useState<Report | null>(null)
@@ -81,17 +80,15 @@ export default function ReportPage() {
     id: idx + 1,
     text: s.sentence,
     similarityScore: Math.round(s.similarity_score * 100),
-    isPlagiarized: s.is_plagiarized || Math.round(s.similarity_score * 100) >= threshold,
+    isPlagiarized: s.is_plagiarized,
   }))
 
-  const filteredSentences = filterPlagiarized
-    ? sentencesWithThreshold.filter((s) => s.isPlagiarized)
-    : sentencesWithThreshold
+  const filteredSentences = sentencesWithThreshold
 
   const displayedSentences = showAllSentences ? filteredSentences : filteredSentences.slice(0, 3)
 
   const plagiarizedCount = sentencesWithThreshold.filter((s) => s.isPlagiarized).length
-  const downloadReport = async () => {
+  const downloadReport = async (type: "normal" | "ai") => {
     if (!report || !report.report_id) return
     const token = getToken()
     if (!token) {
@@ -100,7 +97,7 @@ export default function ReportPage() {
     }
 
     const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
-    const res = await fetch(`${API_URL}/download/${report.report_id}`, {
+    const res = await fetch(`${API_URL}/download/${report.report_id}?type=${type}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
     if (!res.ok) {
@@ -128,9 +125,13 @@ export default function ReportPage() {
               <RotateCcw className="mr-2 h-4 w-4" />
               New Analysis
             </Button>
-            <Button onClick={downloadReport} disabled={!report}>
+            <Button onClick={() => downloadReport("normal")} disabled={!report}>
               <Download className="mr-2 h-4 w-4" />
-              Download Report
+              Download Normal Report
+            </Button>
+            <Button variant="outline" onClick={() => downloadReport("ai")} disabled={!report}>
+              <Download className="mr-2 h-4 w-4" />
+              Download AI Report
             </Button>
           </div>
         </div>
@@ -140,12 +141,6 @@ export default function ReportPage() {
             <PlagiarismScore percentage={report ? report.plagiarism_percentage : 0} />
 
             <div className="grid gap-4 sm:grid-cols-3">
-              <SummaryCard
-                title="OCR Applied"
-                value={report ? "Unknown" : "-"}
-                subtitle={report ? "See analysis details" : "-"}
-                icon={CheckCircle2}
-              />
               <SummaryCard
                 title="Total Sentences"
                 value={report ? (report.analysis || []).length : "-"}
@@ -158,6 +153,13 @@ export default function ReportPage() {
                 subtitle={`${(report ? (report.analysis || []).length : 0) - plagiarizedCount} original`}
                 icon={FileText}
                 variant="warning"
+              />
+              <SummaryCard
+                title="AI Plagiarism"
+                value={`${report ? report.ai_percentage.toFixed(2) : "0.00"}%`}
+                subtitle="AI-generated likelihood"
+                icon={CheckCircle2}
+                variant="default"
               />
             </div>
           </div>
@@ -184,13 +186,6 @@ export default function ReportPage() {
                 </div>
               </div>
             </Card>
-
-            <SentenceAnalysisControls
-              threshold={threshold}
-              onThresholdChange={setThreshold}
-              showPlagiarizedOnly={filterPlagiarized}
-              onShowPlagiarizedOnlyChange={setFilterPlagiarized}
-            />
           </div>
         </div>
 

@@ -1,6 +1,8 @@
 import numpy as np
 
 def score_matches(similarity_matrix, sentences, corpus, threshold=0.20):
+    if not sentences or not corpus or similarity_matrix.size == 0:
+        return 0.0, []
 
     best_scores = similarity_matrix.max(axis=1)
     best_indices = similarity_matrix.argmax(axis=1)
@@ -22,6 +24,6 @@ def score_matches(similarity_matrix, sentences, corpus, threshold=0.20):
             "plagiarized": is_plag
         })
 
-    plagiarism_percentage = (plagiarized_count / len(sentences)) * 100
+    plagiarism_percentage = round((plagiarized_count / len(sentences)) * 100, 2)
 
     return plagiarism_percentage, matches

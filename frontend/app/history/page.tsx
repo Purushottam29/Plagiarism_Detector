@@ -11,6 +11,7 @@ type HistoryItem = {
   id: number
   file_name: string
   plagiarism_percentage: number
+  ai_percentage: number
   created_at: string
 }
 
@@ -49,14 +50,14 @@ export default function HistoryPage() {
     fetchReports()
   }, [router])
 
-  const handleDownload = async (reportId: number) => {
+  const handleDownload = async (reportId: number, type: "normal" | "ai") => {
     const token = getToken()
     if (!token) {
       router.push("/login")
       return
     }
     const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
-    const res = await fetch(`${API_URL}/download/${reportId}`, {
+    const res = await fetch(`${API_URL}/download/${reportId}?type=${type}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
     if (!res.ok) {
@@ -89,6 +90,7 @@ export default function HistoryPage() {
                   <tr className="border-b border-border text-left">
                     <th className="py-3">File Name</th>
                     <th className="py-3">Plagiarism %</th>
+                    <th className="py-3">AI %</th>
                     <th className="py-3">Date</th>
                     <th className="py-3">Action</th>
                   </tr>
@@ -98,11 +100,17 @@ export default function HistoryPage() {
                     <tr key={report.id} className="border-b border-border/50">
                       <td className="py-3">{report.file_name}</td>
                       <td className="py-3">{report.plagiarism_percentage.toFixed(2)}%</td>
+                      <td className="py-3">{report.ai_percentage.toFixed(2)}%</td>
                       <td className="py-3">{new Date(report.created_at).toLocaleString()}</td>
                       <td className="py-3">
-                        <Button variant="outline" size="sm" onClick={() => handleDownload(report.id)}>
-                          Download
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button variant="outline" size="sm" onClick={() => handleDownload(report.id, "normal")}>
+                            Normal
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => handleDownload(report.id, "ai")}>
+                            AI
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   ))}

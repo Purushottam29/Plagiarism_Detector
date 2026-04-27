@@ -1,8 +1,9 @@
 from fastapi import APIRouter, HTTPException
+import json
 from pathlib import Path
 
 from app.core.config import settings
-from app.services.plagiarism.plagiarism_service import run_plagiarism_check
+from app.services.report.report_builder import run_plagiarism_check
 
 router = APIRouter(prefix="/plagiarism", tags=["Plagiarism"])
 
@@ -20,7 +21,9 @@ async def run_plagiarism(file_id: str):
             detail="NLP output not found. Run NLP first."
         )
 
-    report = run_plagiarism_check(nlp_output_path)
+    with open(nlp_output_path, "r", encoding="utf-8") as handle:
+        nlp_data = json.load(handle)
+    report = run_plagiarism_check(nlp_data)
 
     return report
 

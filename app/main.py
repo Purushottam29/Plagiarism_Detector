@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 from app.database import Base, engine
 from app.core.config import settings
 from app.core.logging import setup_logging
@@ -40,7 +41,30 @@ app.include_router(report_routes)
 @app.on_event("startup")
 async def startup_event():
     Base.metadata.create_all(bind=engine)
+    _run_report_table_migration()
     settings.UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
     settings.EXTRACTED_TEXT_DIR.mkdir(parents=True, exist_ok=True)
     settings.NLP_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def _run_report_table_migration():
+    # Lightweight SQLite migration to keep existing deployments working.
+    with engine.begin() as connection:
+        columns = {
+            row[1]
+            for row in connection.execute(text("PRAGMA table_info(reports)")).fetchall()
+        }
+
+        if "ai_percentage" not in columns:
+            connection.execute(
+                text("ALTER TABLE reports ADD COLUMN ai_percentage FLOAT NOT NULL DEFAULT 0.0")
+            )
+        if "normal_pdf_path" not in columns:
+            connection.execute(
+                text("ALTER TABLE reports ADD COLUMN normal_pdf_path VARCHAR NOT NULL DEFAULT ''")
+            )
+        if "ai_pdf_path" not in columns:
+            connection.execute(
+                text("ALTER TABLE reports ADD COLUMN ai_pdf_path VARCHAR NOT NULL DEFAULT ''")
+            )
 

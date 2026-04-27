@@ -9,7 +9,8 @@ def ingest(file_path: Path):
 
     if suffix in [".png", ".jpg", ".jpeg"]:
         # Single image → preprocess → OCR later
-        return preprocess_image(file_path)
+        processor = ImagePreprocessor()
+        return processor.process(file_path)
 
     if suffix == ".pdf":
         # PDF → split into page images
